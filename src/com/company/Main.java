@@ -68,7 +68,7 @@ public class Main {
     }
 
 
-    public static long[] HextoDec(String basic_str,int k){
+    public static long[] HexToArr(String basic_str,int k){
         // Hex to Decimal.
 
         int str_len = basic_str.length();
@@ -87,22 +87,37 @@ public class Main {
         return arr;
     }
 
-    public static String DectoString(long[] dec_arr){
+    public static String ArrToHexStr(long[] dec_arr,int base){
         dec_arr = CutFunction(dec_arr); // Отрезаю старшие нули.
         int len_arr = dec_arr.length;
         StringBuffer str = new StringBuffer("");
-        String str_0 = "00000000";
         for(int i = len_arr-1; i>-1; i--){
-            if(dec_arr[i] == 0){
-                str.append(str_0);
-            }
-            else {
-                str.append(Long.toHexString(dec_arr[i]));
-            }
+            int nums_number  = ShortBilLength(16,dec_arr[i]); // к-во цифр в хексовом представлении в  данном числе
+            int zeros_number = base/4 - nums_number;
+            String str_0 = new String(new char[zeros_number]).replace("\0", "0");
+            str.append(str_0);
+            str.append(Long.toHexString(dec_arr[i]));
         }
         String ret_str = str.toString();
         return ret_str;
     }
+
+    public static String ArrToBinStr(long[] dec_arr,int base){
+        dec_arr = CutFunction(dec_arr); // Отрезаю старшие нули.
+        int len_arr = dec_arr.length;
+        StringBuffer str = new StringBuffer("");
+        str.append(Long.toBinaryString(dec_arr[len_arr-1]));
+        for(int i = len_arr-2; i>-1; i--){
+            int nums_number  = ShortBilLength(2,dec_arr[i]); // к-во цифр в binary представлении числа
+            int zeros_number = base - nums_number;
+            String str_0 = new String(new char[zeros_number]).replace("\0", "0");
+            str.append(str_0);
+            str.append(Long.toBinaryString(dec_arr[i]));
+        }
+        String ret_str = str.toString();
+        return ret_str;
+    }
+
 
     public static long[] ZerosFunc(long[] arr,int k){
         int rez_len = arr.length + k, a_len = arr.length;
@@ -117,35 +132,41 @@ public class Main {
     }
 
 
-    public static long[] add(long[] a,long[] b){
+    public static long[] add(long[] a,long[] b,int base){
         int a_len = a.length, b_len = b.length;
         if(a_len < b_len){a = ZerosFunc(a,b_len - a_len);}
         else{b = ZerosFunc(b,a_len - b_len);}
+        a_len = a.length;
         int rez_len = a_len + 1;
         long[] rez = new long[rez_len];
-        long two32 = 1,carry = 0;
-        two32=two32<<32; two32--;
+        long two_base = 1,carry = 0;
+        two_base=two_base<<base; two_base--;
+/*        System.out.println("Base = " + base);
+        System.out.println("A = " + Arrays.toString(a));
+        System.out.println("B = " + Arrays.toString(b));
+        System.out.println("Rez = " + Arrays.toString(rez));*/
         for(int i = 0; i < a_len; i++){
             long temp = ( a[i] + b[i] + carry );
-            carry = temp >> 32;  ;
-            rez[i] = temp&((two32));
+            carry = temp >> base;  ;
+            rez[i] = temp&((two_base));
         }
         rez[rez_len-1] = carry;
+        rez = CutFunction(rez);
         return rez;
     }
 
-    public static boolean substraction(long[] a, long[] b){
-        long two32 = 1, carry = 0;
+    public static boolean substraction(long[] a, long[] b,int base){
+        long two_base = 1, carry = 0;
         int a_len = a.length, b_len = b.length;
         if(a_len < b_len){a = ZerosFunc(a,b_len - a_len);}
         else{b = ZerosFunc(b,a_len - b_len);}
         b_len = b.length;
-        two32=two32<<32;
+        two_base=two_base<<base;
         if(!Compare(a, b)) {
             for (int i = 0; i < b_len; i++) {
                 long temp = (a[i] - b[i] - carry);
                 carry = temp >>> 63;
-                a[i] = carry * two32 + temp;
+                a[i] = carry * two_base + temp;
             }
             return true;
         }else{
@@ -156,16 +177,16 @@ public class Main {
 
 
 
-    public static long[] MulOne(long[] a, long b){
+    public static long[] MulOne(long[] a, long b, int base){
         long carry = 0;
-        long two32 = 1;
-        two32<<=32;two32--;
+        long two_base = 1;
+        two_base<<=base;two_base--;
         int a_len = a.length;
         long[] c = new long[2*a_len];
         for(int i =0; i< a_len; i++){
             long temp = a[i]*b + carry;
-            c[i] = temp&(two32);
-            carry = temp>>32;
+            c[i] = temp&(two_base);
+            carry = temp>>base;
         }
         c[a_len] = carry;
         return c;
@@ -185,7 +206,7 @@ public class Main {
     }
 
 
-    public static long[] LongMul(long []a, long[] b){
+    public static long[] LongMul(long []a, long[] b, int base){
         /*
 
                 LongMul выдает правильный ответ с точностью в ~5% :
@@ -201,28 +222,34 @@ public class Main {
         long[] c = new long[2*a_len];
         FeelWithZeros(c);
         for(int i =0; i < loop_len; i++){
-            temp = MulOne(a,b[i]);
+            temp = MulOne(a,b[i],base);
             ShiftArrayElemenets(temp,i);
-            c = add(c,temp);
+            c = add(c,temp,base);
         }
         return c;
     }
 
     public static int ShortBilLength(long base, long a){
+        // base тут это базис системы исчисления. base = 10 в нашем житейском случае.
+        if(a == 0 ) {
+            return 1;
+        }
         int rez;
-        rez = (int)(Math.log(a)/Math.log(base)) + 1;
+        rez = (int) (Math.log(a) / Math.log(base)) + 1;
         return rez;
     }
 
-    public static int LongBitLength(long[] arr){ // Потому что со стороны старших разрядов в элементах массива
-        // могут быть нули 0000000000 | 1221412 | 0000000000  - разбиение длинного числа в массиве. справа налево ростут индексы.
+    public static int LongBitLength(long[] arr,int base){
         int _len = arr.length;
+        int max_number_in_mass_elem = ( base == 32 ? 10 : 5);
         int rez = 1;
         for( int i =_len-1;i >= 0;i--){
+            // ищем первое наличие ненулевых элементов слева на право, считаем к-во цифр
+            // в этом первом ненулевом элементе, а все остальные елементы заполнены полностью по 5 или 10 цифр, базы: 32 или 16.
             if(arr[i] == 0){
                 continue;
             }
-            rez = ShortBilLength(10,arr[i]) + 10*i; // 10*i - все остальные заполнены, неважно чем, хоть нулями. Смотреть пример выше.
+            rez = ShortBilLength(10,arr[i]) + max_number_in_mass_elem*i;
             break;
         }
         return rez;
@@ -230,15 +257,14 @@ public class Main {
 
 
 
-    public static long[] ShiftNumber(long[] arr,int k){
-        // with help of multiplication;
-
+    public static long[] ShiftNumber(long[] arr,int k,int base){
+        float max_number_in_mass_elem = ( base == 32 ? 10f : 5f);
         if(k>0) {
-            int _len = (int)(k /10f) + 1;
+            int _len = (int)(k /max_number_in_mass_elem) + 1;
             long[] dec_arr = new long[_len];
-            int index = k/10, power = k%10;
+            int index = k/(int)max_number_in_mass_elem, power = k%(int)max_number_in_mass_elem;
             dec_arr[index] = (long)Math.pow(10,power);
-            long[] rez = LongMul(arr, dec_arr);
+            long[] rez = LongMul(arr, dec_arr,base);
             rez = CutFunction(rez);
             return rez;// длина может увеличиться нулями со стороны старших разрядов.
         }
@@ -247,23 +273,24 @@ public class Main {
 
 
 
-    public static long[] division(long[] a, long[] b){
-        // Взять во внимание, что дятлы могут ввести -> 00000000 <- FFFFFFFFFFF или деление на ноль
-        int k = LongBitLength(a), t = LongBitLength(b), a_len = a.length, b_len = b.length;
+    public static long[] division(long[] a, long[] b,int base){
+        // Взять во внимание, что дятлы могут ввести -> 00000000 <- FFFFFFFFFFF или деление на ноль !!!!!
+        int k = LongBitLength(a,base), t = LongBitLength(b,base), a_len = a.length, b_len = b.length;
+        float max_number_in_mass_elem = ( base == 32 ? 10f : 5f);
         long[] r = a;
         if(a_len>=b_len){
             long[] q = new long[a_len];
             FeelWithZeros(q);
             long[] temp;
-            boolean bool = Compare(a, b); // Просмотреть Compare - можно ли улучшить ?
+            boolean bool = Compare(a, b); // Почему Compare лучше не делать bool методом ?
             while (!bool) {
-                temp = ShiftNumber(b,k-t);
+                temp = ShiftNumber(b,k-t,base);
                 if(Compare(r,temp)){
                     k = k - 1;
                     continue;
                 }
-                substraction(r,temp); // Проблема в Compare.
-                int index = (k - t) / 10, power = (k - t) % 10;
+                substraction(r,temp,base); // Проблема в Compare.
+                int index = (k - t) / (int)max_number_in_mass_elem, power = (k - t) % (int)max_number_in_mass_elem;
                 q[index] += (long) Math.pow(10, power);
                 bool = Compare(r, b);
             }
@@ -273,34 +300,21 @@ public class Main {
         return a;
     }
 
-    public static long[] LongPower(long[] a,long[] b){
-        long[] c = new long[1];
-        c[0] = 1;
-        int b_len = b.length;
-        long one = 1, var = 0; //
-        boolean bool = false;
-        int m = ShortBilLength(2,b[b_len-1]) + 32*(b_len - 1);
-        System.out.println(m%32);
-        for(int i = 0,j = 0; i < m%32 && j < b_len; i++){
-            System.out.println("i = " + i + '\n' + "j = " + j);
-            var = one<<i;
-            bool = (var&b[j]) != 0;
-            long somrez = var&b[j];
-            System.out.println("var = " + var);
-            System.out.println("b[j] = " + b[j] + '\n' + "bool = " + bool);
-            System.out.println("bool-1 = " + somrez);
-            if(bool){
-                c = LongMul(a,c);
+
+    public static long[] LongPower(long[] a,long[] b,int base){
+        String bin_string_b = new String(ArrToBinStr(b,base));
+        int string_len = bin_string_b.length();
+        long[] arr = new long[]{1};
+        char chr;
+        for(int i = string_len - 1; i > -1; i--){
+            chr = bin_string_b.charAt(i);
+            if(chr == '1'){
+                arr = LongMul(a,arr,base);
             }
-            a = LongMul(a,a);
-            if(i==32){
-                j++; i = -1;
-            }
-            c = CutFunction(c);
-            System.out.println("c = " + Arrays.toString(c));
-            System.out.println("__________________________________________________");
+            a = LongMul(a,a,base);
+            System.out.println("ARR = " + Arrays.toString(arr));
         }
-        return c;
+        return arr;
     }
 
 
@@ -308,25 +322,31 @@ public class Main {
 
 
     public static void main(String[] args) {
-        String basic_str1 = "10";
-        String basic_str2 = "10000";
-        long[] a = HextoDec(basic_str1,8);
-        long[] b = HextoDec(basic_str2,8);
-        System.out.println(Arrays.toString(a));
-        long[] a_1 = a.clone();
-        System.out.println(Arrays.toString(a));
-        System.out.println(Arrays.toString(b));
-//      long[] rez_add = add(a,b);
-//      substraction(a_1,b);
-        long[] rez = HextoDec("",8);
-//      long[] rez_mul = LongMul(a,b);
-//        long[] q = division(a,b);
-//        System.out.println("q = " + Arrays.toString(q) + "\nr = " + Arrays.toString(a));
-//        System.out.println(Arrays.toString(rez));
-//        System.out.println(DectoString(rez));
-        long[] rez_pow = LongPower(a,b);
-        System.out.println("rez_pow = " + Arrays.toString(rez_pow));
-
+        String basic_str1 = "A";
+        String basic_str2 = "AA";
+        long[] a_32 = HexToArr(basic_str1,8);
+        long[] b_32 = HexToArr(basic_str2,8);
+        long[] a_16 = HexToArr(basic_str1,4);
+        long[] b_16 = HexToArr(basic_str2,4);
+        System.out.println("A_16 = " + Arrays.toString(a_16));
+        System.out.println("A_32 = " + Arrays.toString(a_32));
+        System.out.println("B_16 = " + Arrays.toString(b_16));
+        System.out.println("B_32 = " + Arrays.toString(b_32));
+        /*long[] rez_32 = LongMul(a_32,b_32,32);
+        long[] rez_16 = LongMul(a_16,b_16,16);
+        System.out.println("LONGMUL_REZ_32 = " + Arrays.toString(rez_32));
+        System.out.println("LONGMUL_REZ_16 = " + Arrays.toString(rez_16));
+        System.out.println("LONGMUL_HEX_32 = " + ArrToHexStr(rez_32,32));
+        System.out.println("LONGMUL_HEX_16 = " + ArrToHexStr(rez_16,16));
+        long[] rez_div_32 = division(rez_32,b_32,32);
+        long[] rez_div_16 = division(rez_16,b_16,16);
+        System.out.println("Division, A_16 = " + Arrays.toString(rez_div_16));
+        System.out.println("Division, A_32 = " + Arrays.toString(rez_div_32));*/
+        long[] _power_rez_32 = LongPower(a_32,b_32,32);
+        long[] _power_rez_16 = LongPower(a_16,b_16,16);
+        System.out.println("LongPower, REZ_32 = " + Arrays.toString(_power_rez_32));
+        System.out.println("LongPower, REZ_16 = " + Arrays.toString(_power_rez_16));
+        System.out.println(ArrToHexStr(_power_rez_16,16));
 
     }
 
