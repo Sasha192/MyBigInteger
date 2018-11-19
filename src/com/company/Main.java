@@ -16,17 +16,17 @@ public class Main {
 
         int _len = arr.length;
         int i = _len - 1;
-        for(i = i; i > 0; i--){ // но оставляем самые младшие нули, если все число [0,0,0,0,0]
-            if(arr[i] != 0){
+        while (true){ // но оставляем самые младшие нули, если все число [0,0,0,0,0]
+            if(arr[i] != 0 || i==0){
                 break;
             }
+            i--;
         }
         long[] new_arr = new long[i+1];
         for(int k = 0; k < i+1; k++){
             new_arr[k] = arr[k];
         }
         return new_arr;
-
     }
 
     public static void FeelWithZeros(long[] arr){
@@ -50,11 +50,6 @@ public class Main {
         }
     }
 
-    public static void Len_Equal(long[] a, long[] b){
-        int a_len = a.length; int b_len = b.length;
-        if(a_len < b_len){a = ZerosFunc(a,b_len - a_len);}
-        else{b = ZerosFunc(b,a_len - b_len);}
-    }
 
     public static boolean Compare(long [] a, long[] b){
         long[] copy_a = a.clone();
@@ -134,16 +129,15 @@ public class Main {
         for(int j = a_len; j < rez_len; j ++){
             rez[j] = 0;
         }
-        arr = null;
-        System.gc();
         return rez;
     }
 
 
     public static long[] add(long[] a,long[] b,int base){
         int a_len = a.length, b_len = b.length;
-        Len_Equal(a,b);
         a_len = a.length; int rez_len = a_len + 1; long[] rez = new long[rez_len];
+        if(a_len < b_len){a = ZerosFunc(a,b_len - a_len);}
+        else{b = ZerosFunc(b,a_len - b_len);}
         long two_base = 1,carry = 0; two_base=two_base<<base; two_base--;
         for(int i = 0; i < a_len; i++){
             long temp = ( a[i] + b[i] + carry );
@@ -158,7 +152,8 @@ public class Main {
     public static long[] subtruction(long[] a, long[] b,int base){
         long two_base = 1, carry = 0;
         int a_len = a.length, b_len = b.length;
-        Len_Equal(a,b);
+        if(a_len < b_len){a = ZerosFunc(a,b_len - a_len);}
+        else{b = ZerosFunc(b,a_len - b_len);}
         b_len = b.length;
         two_base=two_base<<base;
         long[] rez = new long[b_len];
@@ -208,12 +203,13 @@ public class Main {
 
     public static long[] LongMul(long []a, long[] b, int base){
         int b_len = b.length, a_len = a.length;
-        int loop_len  =(a_len < b_len ? b_len : a_len);
-        Len_Equal(a,b);
+        if(a_len < b_len){a = ZerosFunc(a,b_len - a_len);}
+        else{b = ZerosFunc(b,a_len - b_len);}
+        a_len = a.length;
         long[] temp;
         long[] c = new long[2*a_len];
         FeelWithZeros(c);
-        for(int i =0; i < loop_len; i++){
+        for(int i =0; i < a_len; i++){
             temp = MulOne(a,b[i],base);
             ShiftArrayElemenets(temp,i);
             c = add(c,temp,base);
@@ -334,7 +330,7 @@ public class Main {
         return rez_arr;
     }
 
-    public static long[] BarretRedution(long[] arr, long[] m, long[] n){
+    /*public static long[] BarretRedution(long[] arr, long[] m, long[] n){
         int k = arr.length/2;
         long[] q = KillLastDigits(arr,k-1);
         q = LongMul(m,q,16);
@@ -351,10 +347,10 @@ public class Main {
             System.out.println("N = " + Arrays.toString(n));
         }
         return arr;
-    }
+    }*/
 
 
-    public static long[] Long_ModBarrett_Power(long[] a,long[] b,long[] m,long[] n){
+   /* public static long[] Long_ModBarrett_Power(long[] a,long[] b,long[] m,long[] n){
         int base = 16;
         String bin_string_b = new String(ArrToBinStr(b,base));
         int string_len = bin_string_b.length();
@@ -371,7 +367,7 @@ public class Main {
             System.out.println("ARR = " + Arrays.toString(arr));
         }
         return arr;
-    }
+    }*/
 
 
     public static long[] Long_Mod_Add(long[] a, long[] b, long[] n){
@@ -554,49 +550,49 @@ public class Main {
         for(int i = n_1; i < n_2; i++){
             rez[i-n_1] = arr[i];
         }
-        return arr;
+        return rez;
     }
 
-    public static long[] Pre_Mul_Karathuba(long[] a, long[] b){
 
-        /*
 
-            Надо шото с этим делать. Дофига лонгов.
-
-         */
+    public static long[] Mul_Karathuba(long[] a, long[] b){
         int len_a = a.length; int len_b = b.length;
         if(len_a==1){
-            long[] elem_mul = LongMul(a,b,16);
-            CutFunction(elem_mul);
+            long[] elem_mul = MulOne(a,b[0],16);// MulOne;
+            elem_mul = CutFunction(elem_mul);
             return elem_mul;
         }
+        if(len_a < len_b){a = ZerosFunc(a,len_b - len_a); len_a=a.length;}
+        else{b = ZerosFunc(b,len_a - len_b); len_b=b.length;}
         long[] a_1 = Cut_Array(a,len_a/2,len_a);
         long[] a_0 = Cut_Array(a,0,len_a/2);
         long[] b_1 = Cut_Array(b,len_b/2,len_b);
         long[] b_0 = Cut_Array(b,0,len_b/2);
-        long[] p_1 = Pre_Mul_Karathuba(a_1,b_1);
-        long[] p_0 = Pre_Mul_Karathuba(a_0,b_0);
-        long[] p_3 = Pre_Mul_Karathuba(add(a_1,a_0,16),add(b_0,b_1,16));
-        long[] p_3_1 = subtruction(p_3,p_1,16);
-        long[] p_3_rez = subtruction(p_3_1,p_0,16);
-        long[] rez_1 = Karathuba_Shift(p_1,len_a);
-        long[] rez_2 = Karathuba_Shift(p_3_rez,len_a/2);
-        long[] p_4 = add(rez_1,rez_2,16);
-        long[] p_5 = add(p_4,p_0,16);
 
-
+        long[] p_1 = Mul_Karathuba(a_1,b_1);
+        long[] p_0 = Mul_Karathuba(a_0,b_0);
+        long[] p_3 = Mul_Karathuba(add(a_1,a_0,16),add(b_0,b_1,16));
+        p_3 = subtruction(p_3,p_1,16);
+        p_3 = subtruction(p_3,p_0,16);
+        p_3 = Karathuba_Shift(p_3,len_a/2);
+        p_1 = Karathuba_Shift(p_1,len_a);
+        p_1 = add(p_1,p_3,16);
+        p_1 = add(p_1,p_0,16);
+        p_1 = CutFunction(p_1);
+        return p_1;
     }
 
 
     public static void main(String[] args) {
-        String basic_str1 = "FFFFFFFF000";
-        String basic_str2 = "FFFFFFFFFFFFF000";
+        String basic_str1 = "FFFFFFFFF";
+        String basic_str2 = "FFFFF";
         long[] a_16 = HexToArr(basic_str1,4);
         long[] b_16 = HexToArr(basic_str2,4);
         System.out.println(Arrays.toString(a_16));
         System.out.println(Arrays.toString(b_16));
-        System.out.println(Arrays.toString(Karathuba_Shift(a_16,2)));
-        if(a_len < b_len){a = ZerosFunc(a,b_len - a_len);}
-        else{b = ZerosFunc(b,a_len - b_len);}
+        int a_len = a_16.length; int b_len = b_16.length;
+        long[] rez = Mul_Karathuba(a_16,b_16);
+        System.out.println(Arrays.toString(rez));
+        System.out.println(Arrays.toString(LongMul(a_16,b_16,16)));
     }
 }
