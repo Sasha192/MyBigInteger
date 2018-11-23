@@ -557,13 +557,13 @@ public class Main {
 
     public static long[] Mul_Karathuba(long[] a, long[] b){
         int len_a = a.length; int len_b = b.length;
-        if(len_a==1){
-            long[] elem_mul = MulOne(a,b[0],16);// MulOne;
+        if(len_a < 3){
+            long[] elem_mul = LongMul(a,b,16);// MulOne;
             elem_mul = CutFunction(elem_mul);
             return elem_mul;
         }
-        if(len_a < len_b){a = ZerosFunc(a,len_b - len_a); len_a=a.length;}
-        else{b = ZerosFunc(b,len_a - len_b); len_b=b.length;}
+        if(len_a < len_b){a = ZerosFunc(a,len_b - len_a + len_b%2); len_a=a.length;}
+        else if(len_b < len_a){b = ZerosFunc(b,len_a - len_b); len_b=b.length;}
         long[] a_1 = Cut_Array(a,len_a/2,len_a);
         long[] a_0 = Cut_Array(a,0,len_a/2);
         long[] b_1 = Cut_Array(b,len_b/2,len_b);
@@ -590,9 +590,12 @@ public class Main {
         long[] b_16 = HexToArr(basic_str2,4);
         System.out.println(Arrays.toString(a_16));
         System.out.println(Arrays.toString(b_16));
-        int a_len = a_16.length; int b_len = b_16.length;
+        int len_a = a_16.length; int len_b = b_16.length;
+        if(len_a < len_b){a_16 = ZerosFunc(a_16,len_b - len_a); len_a=a_16.length;}
+        else{b_16 = ZerosFunc(b_16,len_a - len_b); len_b=b_16.length;}
         long[] rez = Mul_Karathuba(a_16,b_16);
         System.out.println(Arrays.toString(rez));
         System.out.println(Arrays.toString(LongMul(a_16,b_16,16)));
+
     }
 }
